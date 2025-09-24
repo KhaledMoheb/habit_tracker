@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/local_auth_service.dart';
 import '../services/habit_service.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class AddHabitScreen extends StatefulWidget {
+  const AddHabitScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<AddHabitScreen> createState() => _AddHabitScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _AddHabitScreenState extends State<AddHabitScreen> {
   String name = "User";
   bool _isLoading = true;
   List<String> incompleteHabits = [];

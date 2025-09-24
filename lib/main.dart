@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/add_habit_screen.dart';
 import 'services/local_auth_service.dart';
 
 void main() async {
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (ctx) => const LoginScreen(),
         '/register': (ctx) => const RegisterScreen(),
-        '/home': (ctx) => const HomeScreen(),
+        '/home': (ctx) => const AddHabitScreen(),
       },
     );
   }

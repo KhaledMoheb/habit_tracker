@@ -167,16 +167,16 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Colors.blue[700],
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
               ),
               child: Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.topLeft,
                 child: Text(
-                  name,
+                  'Menu',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -186,8 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.format_list_bulleted),
-              title: const Text('Habits'),
+              leading: const Icon(Icons.settings),
+              title: const Text('Configure'),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
@@ -219,16 +219,20 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.menu, color: Colors.black),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
         title: Text(
           'Welcome, $name!',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // White text
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.blue[700],
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Dismissible(
       key: Key(text),
       background: done
-          ? Container() // Empty container to avoid null error
+          ? Container()
           : Container(
               color: Colors.green,
               alignment: Alignment.centerLeft,
@@ -128,9 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       direction: done
-          ? DismissDirection
-                .endToStart // Only allow swipe left for done items
-          : DismissDirection.horizontal, // Allow both for incomplete habits
+          ? DismissDirection.endToStart
+          : DismissDirection.horizontal,
       onDismissed: (direction) {
         if (direction == DismissDirection.startToEnd && !done) {
           _markHabitDone(text);
@@ -162,23 +161,74 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.format_list_bulleted),
+              title: const Text('Habits'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Personal Info'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_chart),
+              title: const Text('Report'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Notifications'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Sign Out'),
+              onTap: () async {
+                await LocalAuthService.logout();
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
-        leading: const Icon(Icons.menu),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Text(
           'Welcome, $name!',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.blue[700],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await LocalAuthService.logout();
-              Navigator.pushReplacementNamed(context, '/');
-            },
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -213,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         doneHabits.isEmpty
                             ? [
                                 const Text(
-                                  "Swipe right on an activity to mark as done.",
+                                  "Swipe left on an activity to delete it.",
                                   style: TextStyle(color: Colors.grey),
                                 ),
                               ]

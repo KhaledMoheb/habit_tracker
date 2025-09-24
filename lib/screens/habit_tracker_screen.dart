@@ -160,9 +160,9 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                 ),
               ),
               child: Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.topLeft,
                 child: Text(
-                  name,
+                  'Menu',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,

@@ -1,4 +1,6 @@
+// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../services/local_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -39,26 +41,21 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
 
     if (user != null) {
-      // Navigate to home
+      _showToast("Login successful!", isError: false);
       Navigator.pushReplacementNamed(context, '/home', arguments: user);
     } else {
-      _showAlert('Login failed', 'Invalid email or password');
+      _showToast("Invalid email or password");
     }
   }
 
-  void _showAlert(String title, String msg) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(msg),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+  void _showToast(String msg, {bool isError = true}) {
+    Fluttertoast.showToast(
+      msg: msg,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: isError ? Colors.red : Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
 
@@ -88,8 +85,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailCtl,
                     validator: _validateEmail,
                     decoration: InputDecoration(
-                      prefixIcon:
-                          const Icon(Icons.mail_outline, color: Colors.black87),
+                      prefixIcon: const Icon(
+                        Icons.mail_outline,
+                        color: Colors.black87,
+                      ),
                       hintText: 'Enter email',
                       hintStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -97,8 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide.none,
@@ -113,8 +111,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? 'Password must be at least 6 chars'
                         : null,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: Colors.black87),
+                      prefixIcon: const Icon(
+                        Icons.lock_outline,
+                        color: Colors.black87,
+                      ),
                       hintText: 'Enter password',
                       hintStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -122,8 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide.none,
@@ -136,6 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       onPressed: () {
                         // TODO: Forgot password flow
+                        _showToast("Forgot password tapped", isError: false);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
@@ -166,17 +166,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       child: _loading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text('Login'),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'or',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  const Text('or', style: TextStyle(color: Colors.white)),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,

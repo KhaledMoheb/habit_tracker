@@ -1,5 +1,6 @@
 // lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../services/local_auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -16,24 +17,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmController = TextEditingController();
 
   double _age = 25;
-  String _selectedCountry = 'Australia';
+  String _selectedCountry = 'United States';
   bool _loading = false;
 
   final List<String> _countries = [
-    'Australia',
     'United States',
     'Canada',
     'United Kingdom',
+    'Australia',
     'India',
+    'Germany',
+    'France',
+    'Japan',
+    'China',
+    'Brazil',
+    'South Africa',
   ];
 
   final Map<String, bool> _habits = {
-    'Wake up early': false,
+    'Wake Up Early': false,
     'Workout': false,
     'Drink Water': false,
     'Meditate': false,
     'Read a Book': false,
     'Practice Gratitude': false,
+    'Sleep 8 Hours': false,
+    'Eat Healthy': false,
+    'Journal': false,
+    'Walk 10,000 Steps': false,
   };
 
   @override
@@ -62,18 +73,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmController.text.isEmpty) {
-      _showAlert('Error', 'Please fill all fields');
+      _showToast('Please fill all fields');
       return;
     }
 
     final emailError = _validateEmail(_emailController.text);
     if (emailError != null) {
-      _showAlert('Error', emailError);
+      _showToast(emailError);
       return;
     }
 
     if (_passwordController.text != _confirmController.text) {
-      _showAlert('Error', 'Passwords do not match');
+      _showToast('Passwords do not match');
       return;
     }
 
@@ -86,37 +97,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = false);
 
     if (success) {
-      _showAlert('Success', 'Account created. Please login.', okAction: () {
-        Navigator.pop(context);
-      });
+      _showToast('Account created. Please login.', isError: false);
+      Navigator.pop(context);
     } else {
-      _showAlert('Error', 'An account with that email already exists.');
+      _showToast('An account with that email already exists');
     }
   }
 
-  void _showAlert(String title, String msg, {VoidCallback? okAction}) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(msg),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              if (okAction != null) okAction();
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+  void _showToast(String msg, {bool isError = true}) {
+    Fluttertoast.showToast(
+      msg: msg,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: isError ? Colors.red : Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
 
-  Widget _buildTextField(
-      {required TextEditingController controller,
-      required String hint,
-      bool obscureText = false}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    bool obscureText = false,
+  }) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -159,16 +162,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _buildTextField(controller: _emailController, hint: 'Email'),
             const SizedBox(height: 15),
             _buildTextField(
-                controller: _passwordController,
-                hint: 'Password',
-                obscureText: true),
+              controller: _passwordController,
+              hint: 'Password',
+              obscureText: true,
+            ),
             const SizedBox(height: 15),
             _buildTextField(
-                controller: _confirmController,
-                hint: 'Confirm Password',
-                obscureText: true),
+              controller: _confirmController,
+              hint: 'Confirm Password',
+              obscureText: true,
+            ),
             const SizedBox(height: 20),
-
             Text(
               'Age ${_age.toInt()}',
               style: const TextStyle(color: Colors.white),
@@ -183,7 +187,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onChanged: (value) => setState(() => _age = value),
             ),
             const SizedBox(height: 10),
-
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
@@ -195,14 +198,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: const Icon(Icons.arrow_drop_down),
                   value: _selectedCountry,
                   items: _countries
-                      .map((country) => DropdownMenuItem(
-                            value: country,
-                            child: Text(
-                              country,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
+                      .map(
+                        (country) => DropdownMenuItem(
+                          value: country,
+                          child: Text(
+                            country,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                          ))
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) =>
                       setState(() => _selectedCountry = value!),
@@ -210,13 +217,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
             const Text(
               'Select your habits',
               style: TextStyle(color: Colors.white),
             ),
             const SizedBox(height: 10),
-
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -246,7 +251,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 );
               }).toList(),
             ),
-
             const SizedBox(height: 30),
             Center(
               child: SizedBox(
@@ -263,10 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: _loading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Register',
-                          style: TextStyle(fontSize: 18),
-                        ),
+                      : const Text('Register', style: TextStyle(fontSize: 18)),
                 ),
               ),
             ),

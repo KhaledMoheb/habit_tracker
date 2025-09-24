@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/local_auth_service.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,40 +12,42 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailCtl = TextEditingController();
+  final _usernameOrEmailCtl = TextEditingController();
   final _passwordCtl = TextEditingController();
   bool _loading = false;
 
   @override
   void dispose() {
-    _emailCtl.dispose();
+    _usernameOrEmailCtl.dispose();
     _passwordCtl.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Enter email';
-    final re = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return re.hasMatch(v) ? null : 'Enter a valid email';
-  }
-
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    final usernameOrEmail = _usernameOrEmailCtl.text.trim();
+    final password = _passwordCtl.text;
+
+    if (usernameOrEmail.isEmpty) {
+      _showToast("Enter username or email");
+      return;
+    }
+
+    if (password.length < 6) {
+      _showToast("Password must be at least 6 chars");
+      return;
+    }
+
     setState(() => _loading = true);
 
-    final user = await LocalAuthService.login(
-      _emailCtl.text.trim(),
-      _passwordCtl.text,
-    );
+    final user = await LocalAuthService.login(usernameOrEmail, password);
 
     setState(() => _loading = false);
 
     if (user != null) {
       _showToast("Login successful!", isError: false);
-      Navigator.pushReplacementNamed(context, '/home', arguments: user);
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
-      _showToast("Invalid email or password");
+      _showToast("The username or password was incorrect");
     }
   }
 
@@ -62,137 +65,135 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF3B7BD3),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade700, Colors.blue.shade900],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Center(
           child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Habitt",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Habitt',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 40),
-                  TextFormField(
-                    controller: _emailCtl,
-                    validator: _validateEmail,
+                ),
+                const SizedBox(height: 30),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: TextField(
+                    controller: _usernameOrEmailCtl,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.mail_outline,
-                        color: Colors.black87,
+                      prefixIcon: Icon(
+                        Icons.person,
+                        color: Colors.blue.shade700,
                       ),
-                      hintText: 'Enter email',
-                      hintStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
+                      hintText: 'Enter Username or Email',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 15,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  TextFormField(
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: TextField(
                     controller: _passwordCtl,
                     obscureText: true,
-                    validator: (v) => (v == null || v.length < 6)
-                        ? 'Password must be at least 6 chars'
-                        : null,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: Colors.black87,
-                      ),
-                      hintText: 'Enter password',
-                      hintStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
+                      prefixIcon: Icon(Icons.lock, color: Colors.blue.shade700),
+                      hintText: 'Enter Password',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 15,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // TODO: Forgot password flow
-                        _showToast("Forgot password tapped", isError: false);
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 24),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text(
-                        "Forgot password?",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      _showToast("Forgot password tapped", isError: false);
+                    },
+                    child: const Text(
+                      'Forgot password?',
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5390D9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _loading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade600,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 80,
+                      vertical: 15,
+                    ),
+                  ),
+                  child: _loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Log in',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                ),
+                const SizedBox(height: 20),
+                const Text('or', style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterScreen(),
                       ),
-                      child: _loading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Login'),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 70,
+                      vertical: 15,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text('or', style: TextStyle(color: Colors.white)),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/register');
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(fontSize: 18),
-                      ),
-                      child: const Text('Sign Up'),
-                    ),
+                  child: const Text(
+                    'Sign up',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

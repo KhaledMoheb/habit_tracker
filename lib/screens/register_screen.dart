@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/local_auth_service.dart';
-import 'add_habit_screen.dart';
+import 'habit_tracker_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -108,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showToast('Account created successfully', isError: false);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+        MaterialPageRoute(builder: (_) => const HabitTrackerScreen()),
       );
     } else {
       _showToast('An account with that email already exists');

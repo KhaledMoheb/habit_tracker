@@ -19,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   double _age = 25;
   List<String> _countries = [];
+  bool _loadingCountries = true;
   String _selectedCountry = "";
   bool _loading = false;
 
@@ -60,6 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _countries = countries;
         _selectedCountry = _countries.first;
+        _loadingCountries = false;
       });
     } catch (e) {
       // Handle error
@@ -214,7 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onChanged: (double value) => setState(() => _age = value),
                 ),
                 const SizedBox(height: 10),
-                _buildCountryDropdown(),
+                _loadingCountries
+                    ? const CircularProgressIndicator()
+                    : _buildCountryDropdown(),
                 const SizedBox(height: 20),
                 const Text(
                   'Select Your Habits',

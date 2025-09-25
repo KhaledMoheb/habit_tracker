@@ -1,7 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:habitt_app/screens/add_habit_screen.dart';
-import 'package:habitt_app/screens/add_habit_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/habit_tracker_screen.dart';

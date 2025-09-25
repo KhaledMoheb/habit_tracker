@@ -1,6 +1,6 @@
-// lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:habitt_app/consts/country_list.dart';
 import '../services/local_auth_service.dart';
 import 'habit_tracker_screen.dart';
 
@@ -18,22 +18,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmController = TextEditingController();
 
   double _age = 25;
-  String _selectedCountry = 'United States';
+  String _selectedCountry = countries.first;
   bool _loading = false;
-
-  final List<String> _countries = [
-    'United States',
-    'Canada',
-    'United Kingdom',
-    'Australia',
-    'India',
-    'Germany',
-    'France',
-    'Japan',
-    'China',
-    'Brazil',
-    'South Africa',
-  ];
 
   final Map<String, bool> _habits = {
     'Wake Up Early': false,
@@ -48,6 +34,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Walk 10,000 Steps': false,
   };
 
+  final Map<String, String> _habitColors = {
+    'Wake Up Early': 'Orange',
+    'Workout': 'Red',
+    'Drink Water': 'Blue',
+    'Meditate': 'Purple',
+    'Read a Book': 'Green',
+    'Practice Gratitude': 'Amber',
+    'Sleep 8 Hours': 'Teal',
+    'Eat Healthy': 'Pink',
+    'Journal': 'Cyan',
+    'Walk 10,000 Steps': 'Indigo',
+  };
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -57,16 +56,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Enter email';
-    final re = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return re.hasMatch(v) ? null : 'Enter a valid email';
-  }
-
-  void _toggleHabit(String habit) {
-    setState(() {
-      _habits[habit] = !_habits[habit]!;
-    });
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Enter email';
+    }
+    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!regex.hasMatch(value.trim())) {
+      return 'Enter a valid email';
+    }
+    return null;
   }
 
   Future<void> _register() async {
@@ -74,38 +72,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showToast('Name is required');
       return;
     }
-
     if (_emailController.text.trim().isEmpty) {
       _showToast('Email is required');
       return;
     }
-
     final emailError = _validateEmail(_emailController.text);
     if (emailError != null) {
       _showToast(emailError);
       return;
     }
-
     if (_passwordController.text.isEmpty || _confirmController.text.isEmpty) {
       _showToast('Password and Confirm Password are required');
       return;
     }
-
     if (_passwordController.text != _confirmController.text) {
       _showToast('Passwords do not match');
       return;
     }
+
+    // Collect selected habits
+    final selectedHabits = _habits.entries
+        .where((entry) => entry.value == true)
+        .map(
+          (entry) => {
+            'name': entry.key,
+            'color': _habitColors[entry.key] ?? 'Amber', // use your map
+            'done': false,
+          },
+        )
+        .toList();
 
     setState(() => _loading = true);
     final success = await LocalAuthService.register(
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
+      age: _age.round(),
+      country: _selectedCountry,
+      habits: selectedHabits, // pass habits here
     );
     setState(() => _loading = false);
 
     if (success) {
+      final users = await LocalAuthService.getUsers();
+      final newUser = users.firstWhere(
+        (u) => u['email'] == _emailController.text.trim(),
+      );
+      await LocalAuthService.updateLoggedInUser(newUser);
       _showToast('Account created successfully', isError: false);
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HabitTrackerScreen()),
@@ -165,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         icon: Icon(Icons.arrow_drop_down, color: Colors.blue.shade700),
         isExpanded: true,
         underline: const SizedBox(),
-        items: _countries.map((String value) {
+        items: countries.map((String value) {
           return DropdownMenuItem<String>(value: value, child: Text(value));
         }).toList(),
         onChanged: (newValue) {
@@ -252,7 +267,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: _habits.keys.map((habit) {
                     final isSelected = _habits[habit]!;
                     return GestureDetector(
-                      onTap: () => _toggleHabit(habit),
+                      onTap: () => setState(() {
+                        _habits[habit] = !isSelected;
+                      }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,

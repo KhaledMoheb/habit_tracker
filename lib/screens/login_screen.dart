@@ -1,4 +1,3 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/local_auth_service.dart';
@@ -12,8 +11,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameOrEmailCtl = TextEditingController();
-  final _passwordCtl = TextEditingController();
+  final TextEditingController _usernameOrEmailCtl = TextEditingController();
+  final TextEditingController _passwordCtl = TextEditingController();
   bool _loading = false;
 
   @override
@@ -32,22 +31,33 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (password.isEmpty) {
+      _showToast("Enter password");
+      return;
+    }
+
     if (password.length < 6) {
-      _showToast("Password must be at least 6 chars");
+      _showToast("Password must be at least 6 characters");
       return;
     }
 
     setState(() => _loading = true);
 
-    final user = await LocalAuthService.login(usernameOrEmail, password);
+    try {
+      final user = await LocalAuthService.login(usernameOrEmail, password);
 
-    setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
 
-    if (user != null) {
-      _showToast("Login successful!", isError: false);
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      _showToast("The username or password was incorrect");
+      if (user != null) {
+        _showToast("Login successful!", isError: false);
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _showToast("Invalid username or password");
+      }
+    } catch (e) {
+      setState(() => _loading = false);
+      _showToast("Login failed: $e");
     }
   }
 

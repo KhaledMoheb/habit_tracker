@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:habitt_app/services/habit_service.dart';
+import '../services/local_auth_service.dart';
 import 'habit_tracker_screen.dart';
 
 class AddHabitScreen extends StatefulWidget {
+  const AddHabitScreen({Key? key}) : super(key: key);
+
   @override
-  _AddHabitScreenState createState() => _AddHabitScreenState();
+  State<AddHabitScreen> createState() => _AddHabitScreenState();
 }
 
 class _AddHabitScreenState extends State<AddHabitScreen> {
@@ -30,30 +32,44 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Future<void> _loadHabits() async {
-    final habits = await HabitService.getHabits();
-    setState(() {
-      _habits = habits;
-    });
+    final user = await LocalAuthService.getLoggedInUser();
+    if (user != null) {
+      setState(() {
+        _habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
+      });
+    }
   }
 
-  void _addHabit() async {
+  Future<void> _addHabit() async {
     final habitName = _habitController.text.trim();
     if (habitName.isEmpty) return;
 
-    await HabitService.addHabit(
-      habitName,
-      color: _selectedColorKey,
-      done: false,
-    );
+    final user = await LocalAuthService.getLoggedInUser();
+    if (user == null) return;
+
+    final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
+    habits.add({'name': habitName, 'color': _selectedColorKey, 'done': false});
+
+    user['habits'] = habits;
+    await LocalAuthService.updateLoggedInUser(user);
 
     _habitController.clear();
     _selectedColorKey = 'Amber';
-    _loadHabits(); // Refresh habits
+
+    await _loadHabits();
   }
 
-  void _removeHabit(String habitName) async {
-    await HabitService.deleteHabit(habitName);
-    _loadHabits(); // Refresh habits
+  Future<void> _removeHabit(String habitName) async {
+    final user = await LocalAuthService.getLoggedInUser();
+    if (user == null) return;
+
+    final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
+    habits.removeWhere((h) => h['name'] == habitName);
+
+    user['habits'] = habits;
+    await LocalAuthService.updateLoggedInUser(user);
+
+    await _loadHabits();
   }
 
   @override
@@ -98,16 +114,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 12),
 
             // Color selector label
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
-              child: const Text(
+              child: Text(
                 'Select Color:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
             const SizedBox(height: 6),
 
-            // Color dropdown with full-width items
+            // Color dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -195,41 +211,53 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
             // Habits list
             Expanded(
-              child: ListView.builder(
-                itemCount: _habits.length,
-                itemBuilder: (context, index) {
-                  final habit = _habits[index];
-                  final color = _colorOptions[habit["color"]] ?? Colors.grey;
+              child: _habits.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No habits yet. Add one above.",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _habits.length,
+                      itemBuilder: (context, index) {
+                        final habit = _habits[index];
+                        final color =
+                            _colorOptions[habit["color"]] ?? Colors.grey;
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  habit["name"] ?? "",
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () =>
+                                    _removeHabit(habit["name"] ?? ""),
+                                tooltip: 'Delete Habit',
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            habit["name"] ?? "",
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _removeHabit(habit["name"] ?? ""),
-                          tooltip: 'Delete Habit',
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

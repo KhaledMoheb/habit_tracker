@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/local_auth_service.dart';
-import '../services/habit_service.dart';
 
 class HabitTrackerScreen extends StatefulWidget {
   const HabitTrackerScreen({Key? key}) : super(key: key);
@@ -22,38 +21,39 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
   }
 
   Future<void> _initialize() async {
-    await _loadUserName();
-    await _loadHabits();
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _loadUserName() async {
     final user = await LocalAuthService.getLoggedInUser();
     if (user != null) {
+      final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
       setState(() {
         name = user['name'] ?? "User";
+        incompleteHabits = habits.where((h) => h["done"] == false).toList();
+        doneHabits = habits.where((h) => h["done"] == true).toList();
       });
+    }
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _markHabitDone(String habit) async {
+    final user = await LocalAuthService.getLoggedInUser();
+    if (user == null) return;
+    final habits = List<Map<String, dynamic>>.from(user['habits']);
+    final index = habits.indexWhere((h) => h["name"] == habit);
+    if (index != -1) {
+      habits[index]["done"] = true;
+      user['habits'] = habits;
+      await LocalAuthService.updateLoggedInUser(user);
+      await _initialize();
     }
   }
 
-  Future<void> _loadHabits() async {
-    final habits = await HabitService.getHabits();
-    setState(() {
-      incompleteHabits = habits.where((h) => h["done"] == false).toList();
-      doneHabits = habits.where((h) => h["done"] == true).toList();
-    });
-  }
-
-  void _markHabitDone(String habit) async {
-    await HabitService.updateHabit(habit, true);
-    _loadHabits();
-  }
-
-  void _deleteHabit(String habit) async {
-    await HabitService.deleteHabit(habit);
-    _loadHabits();
+  Future<void> _deleteHabit(String habit) async {
+    final user = await LocalAuthService.getLoggedInUser();
+    if (user == null) return;
+    final habits = List<Map<String, dynamic>>.from(user['habits']);
+    habits.removeWhere((h) => h["name"] == habit);
+    user['habits'] = habits;
+    await LocalAuthService.updateLoggedInUser(user);
+    await _initialize();
   }
 
   Color _getColorFromName(String colorName) {
@@ -72,6 +72,14 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
         return Colors.purple;
       case "amber":
         return Colors.amber;
+      case "teal":
+        return Colors.teal;
+      case "pink":
+        return Colors.pink;
+      case "cyan":
+        return Colors.cyan;
+      case "indigo":
+        return Colors.indigo;
       default:
         return Colors.deepPurple;
     }
@@ -159,11 +167,11 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                   bottomRight: Radius.circular(16),
                 ),
               ),
-              child: Align(
+              child: const Align(
                 alignment: Alignment.topLeft,
                 child: Text(
                   'Menu',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -199,6 +207,7 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
               title: const Text('Sign Out'),
               onTap: () async {
                 await LocalAuthService.logout();
+                if (!mounted) return;
                 Navigator.pushReplacementNamed(context, '/');
               },
             ),

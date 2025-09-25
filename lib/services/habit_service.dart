@@ -4,8 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HabitService {
   static const String _selectedHabitsKey = "selectedHabitsMap";
   static const String _completedHabitsKey = "completedHabitsMap";
+  static const String _weeklyDataKey = "weeklyData";
 
-  /// Get all selected (incomplete) habits
+  /// -------------------------
+  /// Selected & Completed Habits
+  /// -------------------------
+
   static Future<List<Map<String, dynamic>>> getSelectedHabits() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_selectedHabitsKey);
@@ -14,7 +18,6 @@ class HabitService {
     return List<Map<String, dynamic>>.from(decoded);
   }
 
-  /// Get all completed habits
   static Future<List<Map<String, dynamic>>> getCompletedHabits() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_completedHabitsKey);
@@ -23,44 +26,59 @@ class HabitService {
     return List<Map<String, dynamic>>.from(decoded);
   }
 
-  /// Save selected habits
-  static Future<void> _saveSelectedHabits(
+  static Future<void> saveSelectedHabits(
     List<Map<String, dynamic>> habits,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedHabitsKey, json.encode(habits));
   }
 
-  /// Save completed habits
-  static Future<void> _saveCompletedHabits(
+  static Future<void> saveCompletedHabits(
     List<Map<String, dynamic>> habits,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_completedHabitsKey, json.encode(habits));
   }
 
-  /// Add new habit (to selected list)
+  /// -------------------------
+  /// Habit Operations
+  /// -------------------------
+
   static Future<void> addHabit(String habit, {String color = "Purple"}) async {
     final habits = await getSelectedHabits();
     habits.add({"name": habit, "color": color});
-    await _saveSelectedHabits(habits);
-  }
+    await saveSelectedHabits(habits);
 
-  /// Mark habit as done: move from selected → completed
-  static Future<void> completeHabit(String habit) async {
-    final selected = await getSelectedHabits();
-    final completed = await getCompletedHabits();
-
-    final index = selected.indexWhere((h) => h["name"] == habit);
-    if (index != -1) {
-      final habitData = selected.removeAt(index);
-      completed.add(habitData);
-      await _saveSelectedHabits(selected);
-      await _saveCompletedHabits(completed);
+    // Ensure every habit has weeklyData initialized
+    final data = await getWeeklyData();
+    for (var h in habits) {
+      final name = h["name"] as String;
+      if (!data.containsKey(name)) {
+        data[name] = List.filled(7, 0); // Mon–Sun = 0
+      }
     }
+    await _saveWeeklyData(data);
   }
 
-  /// Delete habit from either list
+  static Future<void> completeHabitForDay(
+    String habit,
+    int dayIndex, // 0 = Mon … 6 = Sun
+  ) async {
+    final data = await getWeeklyData();
+    if (!data.containsKey(habit)) {
+      data[habit] = List.filled(7, 0);
+    }
+    data[habit]![dayIndex] = 1;
+    await _saveWeeklyData(data);
+  }
+
+  static Future<void> resetHabitForDay(String habit, int dayIndex) async {
+    final data = await getWeeklyData();
+    if (!data.containsKey(habit)) return;
+    data[habit]![dayIndex] = 0;
+    await _saveWeeklyData(data);
+  }
+
   static Future<void> deleteHabit(String habit) async {
     final selected = await getSelectedHabits();
     final completed = await getCompletedHabits();
@@ -68,14 +86,49 @@ class HabitService {
     selected.removeWhere((h) => h["name"] == habit);
     completed.removeWhere((h) => h["name"] == habit);
 
-    await _saveSelectedHabits(selected);
-    await _saveCompletedHabits(completed);
+    await saveSelectedHabits(selected);
+    await saveCompletedHabits(completed);
+
+    // Also remove from weeklyData
+    final data = await getWeeklyData();
+    data.remove(habit);
+    await _saveWeeklyData(data);
   }
 
-  /// Clear all habits
   static Future<void> clearAllHabits() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_selectedHabitsKey);
     await prefs.remove(_completedHabitsKey);
+    await prefs.remove(_weeklyDataKey);
+  }
+
+  /// -------------------------
+  /// Weekly Data
+  /// -------------------------
+
+  static Future<Map<String, List<int>>> getWeeklyData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_weeklyDataKey);
+    Map<String, List<int>> data = {};
+
+    if (raw != null && raw.isNotEmpty) {
+      final Map<String, dynamic> decoded = json.decode(raw);
+      data = decoded.map((key, value) => MapEntry(key, List<int>.from(value)));
+    }
+
+    // Ensure all current habits exist in weeklyData
+    final habits = await getSelectedHabits();
+    for (var h in habits) {
+      final name = h["name"] as String;
+      data.putIfAbsent(name, () => List.filled(7, 0));
+    }
+
+    await _saveWeeklyData(data);
+    return data;
+  }
+
+  static Future<void> _saveWeeklyData(Map<String, List<int>> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_weeklyDataKey, json.encode(data));
   }
 }

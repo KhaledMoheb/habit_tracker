@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:habitt_app/screens/personal_info_screen.dart';
+import 'package:habitt_app/screens/reports_screen.dart';
+import 'package:habitt_app/services/habit_service.dart';
 import '../services/local_auth_service.dart';
 
 class HabitTrackerScreen extends StatefulWidget {
@@ -21,51 +24,43 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
   }
 
   Future<void> _initialize() async {
-    final user = await LocalAuthService.getUser();
+    final user = await LocalAuthService.getLoggedInUser();
+    final selected = await HabitService.getSelectedHabits();
+    final completed = await HabitService.getCompletedHabits();
+
     if (user != null) {
       setState(() {
         name = user['name'] ?? "User";
-        incompleteHabits = List<Map<String, dynamic>>.from(
-          user['selectedHabits'] ?? [],
-        );
-        doneHabits = List<Map<String, dynamic>>.from(
-          user['completedHabits'] ?? [],
-        );
+        incompleteHabits = selected;
+        doneHabits = completed;
       });
     }
     setState(() => _isLoading = false);
   }
 
   Future<void> _markHabitDone(String habit) async {
-    final user = await LocalAuthService.getUser();
-    if (user == null) return;
-
-    final selected = List<Map<String, dynamic>>.from(user['selectedHabits']);
-    final completed = List<Map<String, dynamic>>.from(user['completedHabits']);
+    final selected = await HabitService.getSelectedHabits();
+    final completed = await HabitService.getCompletedHabits();
 
     final index = selected.indexWhere((h) => h["name"] == habit);
     if (index != -1) {
       final moved = selected.removeAt(index);
       completed.add(moved);
 
-      await LocalAuthService.updateSelectedHabits(selected);
-      await LocalAuthService.updateCompletedHabits(completed);
+      // Save updates
+      await HabitService.saveSelectedHabits(selected);
+      await HabitService.saveCompletedHabits(completed);
+
+      // Update today's completion (example: use DateTime weekday → 1–7, shift to 0–6)
+      final today = DateTime.now().weekday - 1;
+      await HabitService.completeHabitForDay(habit, today);
+
       await _initialize();
     }
   }
 
   Future<void> _deleteHabit(String habit) async {
-    final user = await LocalAuthService.getUser();
-    if (user == null) return;
-
-    final selected = List<Map<String, dynamic>>.from(user['selectedHabits']);
-    final completed = List<Map<String, dynamic>>.from(user['completedHabits']);
-
-    selected.removeWhere((h) => h["name"] == habit);
-    completed.removeWhere((h) => h["name"] == habit);
-
-    await LocalAuthService.updateSelectedHabits(selected);
-    await LocalAuthService.updateCompletedHabits(completed);
+    await HabitService.deleteHabit(habit);
     await _initialize();
   }
 
@@ -203,12 +198,24 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Personal Info'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.insert_chart),
               title: const Text('Report'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportsScreen()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.notifications),

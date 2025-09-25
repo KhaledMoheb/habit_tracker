@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habitt_app/services/habit_service.dart';
 import '../services/local_auth_service.dart';
 import 'habit_tracker_screen.dart';
 
@@ -32,7 +33,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Future<void> _loadHabits() async {
-    final user = await LocalAuthService.getUser();
+    final user = await LocalAuthService.getLoggedInUser();
     if (user != null) {
       setState(() {
         _habits = List<Map<String, dynamic>>.from(user['selectedHabits'] ?? []);
@@ -44,7 +45,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     final habitName = _habitController.text.trim();
     if (habitName.isEmpty) return;
 
-    final user = await LocalAuthService.getUser();
+    final user = await LocalAuthService.getLoggedInUser();
     if (user == null) return;
 
     final habits = List<Map<String, dynamic>>.from(
@@ -52,7 +53,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
     habits.add({'name': habitName, 'color': _selectedColorKey});
 
-    await LocalAuthService.updateSelectedHabits(habits);
+    await HabitService.saveSelectedHabits(habits);
 
     _habitController.clear();
     _selectedColorKey = 'Amber';
@@ -61,7 +62,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Future<void> _removeHabit(String habitName) async {
-    final user = await LocalAuthService.getUser();
+    final user = await LocalAuthService.getLoggedInUser();
     if (user == null) return;
 
     final habits = List<Map<String, dynamic>>.from(
@@ -69,7 +70,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
     habits.removeWhere((h) => h['name'] == habitName);
 
-    await LocalAuthService.updateSelectedHabits(habits);
+    await HabitService.saveSelectedHabits(habits);
 
     await _loadHabits();
   }

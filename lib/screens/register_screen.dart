@@ -13,7 +13,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
 
@@ -64,7 +64,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _loadingCountries = false;
       });
     } catch (e) {
-      // Handle error
       _showToast('Error fetching countries');
     }
   }
@@ -72,21 +71,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Enter email';
-    }
-    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!regex.hasMatch(value.trim())) {
-      return 'Enter a valid email';
-    }
-    return null;
   }
 
   Future<void> _register() async {
@@ -94,13 +82,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showToast('Name is required');
       return;
     }
-    if (_emailController.text.trim().isEmpty) {
-      _showToast('Email is required');
-      return;
-    }
-    final emailError = _validateEmail(_emailController.text);
-    if (emailError != null) {
-      _showToast(emailError);
+    if (_usernameController.text.trim().isEmpty) {
+      _showToast('Username is required');
       return;
     }
     if (_passwordController.text.isEmpty || _confirmController.text.isEmpty) {
@@ -123,15 +106,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .toList();
 
     setState(() => _loading = true);
+
     await LocalAuthService.register(
       name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
+      username: _usernameController.text.trim(),
       password: _passwordController.text,
       age: _age.round(),
       country: _selectedCountry,
       selectedHabits: selectedHabits,
       completedHabits: [],
     );
+
     setState(() => _loading = false);
 
     _showToast('Account created successfully', isError: false);
@@ -186,7 +171,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 _buildInputField(_nameController, 'Full Name', Icons.person),
                 const SizedBox(height: 10),
-                _buildInputField(_emailController, 'Email', Icons.email),
+                _buildInputField(
+                  _usernameController,
+                  'Username',
+                  Icons.alternate_email,
+                ),
                 const SizedBox(height: 10),
                 _buildInputField(
                   _passwordController,

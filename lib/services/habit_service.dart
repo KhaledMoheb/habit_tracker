@@ -2,67 +2,80 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HabitService {
-  static const String _keyHabits = "habits";
+  static const String _selectedHabitsKey = "selectedHabitsMap";
+  static const String _completedHabitsKey = "completedHabitsMap";
 
-  // static final List<Map<String, dynamic>> _defaultHabits = [
-  //   {"name": "Workout", "color": "Red", "done": false},
-  //   {"name": "Meditate", "color": "Pink", "done": false},
-  //   {"name": "Read a Book", "color": "Green", "done": false},
-  //   {"name": "Drink Water", "color": "Blue", "done": false},
-  //   {"name": "Practice Gratitude", "color": "Amber", "done": false},
-  //   {"name": "Wake Up Early", "color": "Orange", "done": false},
-  //   {"name": "Journal", "color": "Light Green", "done": false},
-  // ];
-
-  static final List<Map<String, dynamic>> _defaultHabits = [];
-
-  static Future<List<Map<String, dynamic>>> getHabits() async {
+  /// Get all selected (incomplete) habits
+  static Future<List<Map<String, dynamic>>> getSelectedHabits() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? jsonString = prefs.getString(_keyHabits);
-
-    if (jsonString == null || jsonString.isEmpty) {
-      // Save defaults if nothing exists
-      await _saveHabits(_defaultHabits);
-      return List<Map<String, dynamic>>.from(_defaultHabits);
-    }
-
-    final List decoded = json.decode(jsonString);
+    final raw = prefs.getString(_selectedHabitsKey);
+    if (raw == null || raw.isEmpty) return [];
+    final List decoded = json.decode(raw);
     return List<Map<String, dynamic>>.from(decoded);
   }
 
-  static Future<void> _saveHabits(List<Map<String, dynamic>> habits) async {
+  /// Get all completed habits
+  static Future<List<Map<String, dynamic>>> getCompletedHabits() async {
     final prefs = await SharedPreferences.getInstance();
-    final String jsonString = json.encode(habits);
-    await prefs.setString(_keyHabits, jsonString);
+    final raw = prefs.getString(_completedHabitsKey);
+    if (raw == null || raw.isEmpty) return [];
+    final List decoded = json.decode(raw);
+    return List<Map<String, dynamic>>.from(decoded);
   }
 
-  static Future<void> addHabit(
-    String habit, {
-    String color = "Purple",
-    bool done = false,
-  }) async {
-    final habits = await getHabits();
-    habits.add({"name": habit, "color": color, "done": done});
-    await _saveHabits(habits);
+  /// Save selected habits
+  static Future<void> _saveSelectedHabits(
+    List<Map<String, dynamic>> habits,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedHabitsKey, json.encode(habits));
   }
 
-  static Future<void> updateHabit(String habit, bool done) async {
-    final habits = await getHabits();
-    final index = habits.indexWhere((h) => h["name"] == habit);
+  /// Save completed habits
+  static Future<void> _saveCompletedHabits(
+    List<Map<String, dynamic>> habits,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_completedHabitsKey, json.encode(habits));
+  }
+
+  /// Add new habit (to selected list)
+  static Future<void> addHabit(String habit, {String color = "Purple"}) async {
+    final habits = await getSelectedHabits();
+    habits.add({"name": habit, "color": color});
+    await _saveSelectedHabits(habits);
+  }
+
+  /// Mark habit as done: move from selected → completed
+  static Future<void> completeHabit(String habit) async {
+    final selected = await getSelectedHabits();
+    final completed = await getCompletedHabits();
+
+    final index = selected.indexWhere((h) => h["name"] == habit);
     if (index != -1) {
-      habits[index]["done"] = done;
-      await _saveHabits(habits);
+      final habitData = selected.removeAt(index);
+      completed.add(habitData);
+      await _saveSelectedHabits(selected);
+      await _saveCompletedHabits(completed);
     }
   }
 
+  /// Delete habit from either list
   static Future<void> deleteHabit(String habit) async {
-    final habits = await getHabits();
-    habits.removeWhere((h) => h["name"] == habit);
-    await _saveHabits(habits);
+    final selected = await getSelectedHabits();
+    final completed = await getCompletedHabits();
+
+    selected.removeWhere((h) => h["name"] == habit);
+    completed.removeWhere((h) => h["name"] == habit);
+
+    await _saveSelectedHabits(selected);
+    await _saveCompletedHabits(completed);
   }
 
-  static Future<void> clearHabits() async {
+  /// Clear all habits
+  static Future<void> clearAllHabits() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyHabits);
+    await prefs.remove(_selectedHabitsKey);
+    await prefs.remove(_completedHabitsKey);
   }
 }

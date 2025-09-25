@@ -4,11 +4,9 @@ import 'package:habitt_app/screens/add_habit_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/habit_tracker_screen.dart';
-import 'services/local_auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await LocalAuthService.seedTestUser();
   runApp(const MyApp());
 }
 

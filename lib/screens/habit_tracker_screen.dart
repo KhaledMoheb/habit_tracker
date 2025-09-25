@@ -21,38 +21,51 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
   }
 
   Future<void> _initialize() async {
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user != null) {
-      final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
       setState(() {
         name = user['name'] ?? "User";
-        incompleteHabits = habits.where((h) => h["done"] == false).toList();
-        doneHabits = habits.where((h) => h["done"] == true).toList();
+        incompleteHabits = List<Map<String, dynamic>>.from(
+          user['selectedHabits'] ?? [],
+        );
+        doneHabits = List<Map<String, dynamic>>.from(
+          user['completedHabits'] ?? [],
+        );
       });
     }
     setState(() => _isLoading = false);
   }
 
   Future<void> _markHabitDone(String habit) async {
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user == null) return;
-    final habits = List<Map<String, dynamic>>.from(user['habits']);
-    final index = habits.indexWhere((h) => h["name"] == habit);
+
+    final selected = List<Map<String, dynamic>>.from(user['selectedHabits']);
+    final completed = List<Map<String, dynamic>>.from(user['completedHabits']);
+
+    final index = selected.indexWhere((h) => h["name"] == habit);
     if (index != -1) {
-      habits[index]["done"] = true;
-      user['habits'] = habits;
-      await LocalAuthService.updateLoggedInUser(user);
+      final moved = selected.removeAt(index);
+      completed.add(moved);
+
+      await LocalAuthService.updateSelectedHabits(selected);
+      await LocalAuthService.updateCompletedHabits(completed);
       await _initialize();
     }
   }
 
   Future<void> _deleteHabit(String habit) async {
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user == null) return;
-    final habits = List<Map<String, dynamic>>.from(user['habits']);
-    habits.removeWhere((h) => h["name"] == habit);
-    user['habits'] = habits;
-    await LocalAuthService.updateLoggedInUser(user);
+
+    final selected = List<Map<String, dynamic>>.from(user['selectedHabits']);
+    final completed = List<Map<String, dynamic>>.from(user['completedHabits']);
+
+    selected.removeWhere((h) => h["name"] == habit);
+    completed.removeWhere((h) => h["name"] == habit);
+
+    await LocalAuthService.updateSelectedHabits(selected);
+    await LocalAuthService.updateCompletedHabits(completed);
     await _initialize();
   }
 

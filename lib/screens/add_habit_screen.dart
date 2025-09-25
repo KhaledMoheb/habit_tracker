@@ -32,10 +32,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Future<void> _loadHabits() async {
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user != null) {
       setState(() {
-        _habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
+        _habits = List<Map<String, dynamic>>.from(user['selectedHabits'] ?? []);
       });
     }
   }
@@ -44,14 +44,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     final habitName = _habitController.text.trim();
     if (habitName.isEmpty) return;
 
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user == null) return;
 
-    final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
-    habits.add({'name': habitName, 'color': _selectedColorKey, 'done': false});
+    final habits = List<Map<String, dynamic>>.from(
+      user['selectedHabits'] ?? [],
+    );
+    habits.add({'name': habitName, 'color': _selectedColorKey});
 
-    user['habits'] = habits;
-    await LocalAuthService.updateLoggedInUser(user);
+    await LocalAuthService.updateSelectedHabits(habits);
 
     _habitController.clear();
     _selectedColorKey = 'Amber';
@@ -60,14 +61,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Future<void> _removeHabit(String habitName) async {
-    final user = await LocalAuthService.getLoggedInUser();
+    final user = await LocalAuthService.getUser();
     if (user == null) return;
 
-    final habits = List<Map<String, dynamic>>.from(user['habits'] ?? []);
+    final habits = List<Map<String, dynamic>>.from(
+      user['selectedHabits'] ?? [],
+    );
     habits.removeWhere((h) => h['name'] == habitName);
 
-    user['habits'] = habits;
-    await LocalAuthService.updateLoggedInUser(user);
+    await LocalAuthService.updateSelectedHabits(habits);
 
     await _loadHabits();
   }

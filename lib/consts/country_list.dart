@@ -1,4 +1,4 @@
-const List<String> countries = [
+const List<String> _countries = [
   'United States',
   'Canada',
   'United Kingdom',
@@ -11,3 +11,7 @@ const List<String> countries = [
   'Brazil',
   'South Africa',
 ];
+
+Future<List<String>> fetchCountries() async {
+  return _countries;
+}

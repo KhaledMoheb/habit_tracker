@@ -18,7 +18,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmController = TextEditingController();
 
   double _age = 25;
-  String _selectedCountry = countries.first;
+  List<String> _countries = [];
+  String _selectedCountry = "";
   bool _loading = false;
 
   final Map<String, bool> _habits = {
@@ -46,6 +47,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Journal': 'Cyan',
     'Walk 10,000 Steps': 'Indigo',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCountries();
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      List<String> countries = await fetchCountries();
+      setState(() {
+        _countries = countries;
+        _selectedCountry = _countries.first;
+      });
+    } catch (e) {
+      // Handle error
+      _showToast('Error fetching countries');
+    }
+  }
 
   @override
   void dispose() {
@@ -90,44 +110,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    // Collect selected habits
     final selectedHabits = _habits.entries
         .where((entry) => entry.value == true)
         .map(
           (entry) => {
             'name': entry.key,
-            'color': _habitColors[entry.key] ?? 'Amber', // use your map
-            'done': false,
+            'color': _habitColors[entry.key] ?? 'Amber',
           },
         )
         .toList();
 
     setState(() => _loading = true);
-    final success = await LocalAuthService.register(
-      _nameController.text.trim(),
-      _emailController.text.trim(),
-      _passwordController.text,
+    await LocalAuthService.register(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
       age: _age.round(),
       country: _selectedCountry,
-      habits: selectedHabits, // pass habits here
+      selectedHabits: selectedHabits,
+      completedHabits: [],
     );
     setState(() => _loading = false);
 
-    if (success) {
-      final users = await LocalAuthService.getUsers();
-      final newUser = users.firstWhere(
-        (u) => u['email'] == _emailController.text.trim(),
-      );
-      await LocalAuthService.updateLoggedInUser(newUser);
-      _showToast('Account created successfully', isError: false);
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HabitTrackerScreen()),
-      );
-    } else {
-      _showToast('An account with that email already exists');
-    }
+    _showToast('Account created successfully', isError: false);
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HabitTrackerScreen()),
+    );
   }
 
   void _showToast(String msg, {bool isError = true}) {
@@ -138,57 +148,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: isError ? Colors.red : Colors.green,
       textColor: Colors.white,
       fontSize: 16.0,
-    );
-  }
-
-  Widget _buildInputField(
-    TextEditingController controller,
-    String hint,
-    IconData icon, {
-    bool obscureText = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.blue.shade700),
-          hintText: hint,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 15,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCountryDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: DropdownButton<String>(
-        value: _selectedCountry,
-        icon: Icon(Icons.arrow_drop_down, color: Colors.blue.shade700),
-        isExpanded: true,
-        underline: const SizedBox(),
-        items: countries.map((String value) {
-          return DropdownMenuItem<String>(value: value, child: Text(value));
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            _selectedCountry = newValue!;
-          });
-        },
-      ),
     );
   }
 
@@ -324,6 +283,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    bool obscureText = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Colors.blue.shade700),
+          hintText: hint,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountryDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: DropdownButton<String>(
+        value: _selectedCountry,
+        icon: Icon(Icons.arrow_drop_down, color: Colors.blue.shade700),
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: _countries.map((String value) {
+          return DropdownMenuItem<String>(value: value, child: Text(value));
+        }).toList(),
+        onChanged: (newValue) {
+          setState(() {
+            _selectedCountry = newValue!;
+          });
+        },
       ),
     );
   }

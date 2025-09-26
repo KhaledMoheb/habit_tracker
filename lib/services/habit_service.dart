@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 class HabitService {
   static const String _selectedHabitsKey = "selectedHabitsMap";
@@ -130,5 +131,34 @@ class HabitService {
   static Future<void> _saveWeeklyData(Map<String, List<int>> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_weeklyDataKey, json.encode(data));
+  }
+
+  static Color getColorFromName(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case "green":
+        return Colors.green;
+      case "blue":
+        return Colors.blue;
+      case "red":
+        return Colors.red;
+      case "orange":
+        return Colors.orange;
+      case "yellow":
+        return Colors.yellow;
+      case "purple":
+        return Colors.purple;
+      case "amber":
+        return Colors.amber;
+      case "teal":
+        return Colors.teal;
+      case "pink":
+        return Colors.pink;
+      case "cyan":
+        return Colors.cyan;
+      case "indigo":
+        return Colors.indigo;
+      default:
+        return Colors.deepPurple;
+    }
   }
 }

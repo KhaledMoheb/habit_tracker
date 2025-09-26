@@ -10,8 +10,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameOrEmailCtl = TextEditingController();
-  final _passwordCtl = TextEditingController();
+  final _usernameOrEmailCtl = TextEditingController(
+    text: LocalAuthService.defaultUsername,
+  );
+  final _passwordCtl = TextEditingController(
+    text: LocalAuthService.defaultPassword,
+  );
   bool _loading = false;
 
   @override

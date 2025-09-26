@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalAuthService {
+  static const defaultUsername = 'testuser';
+  static const defaultPassword = 'password123';
+
   static const _nameKey = 'name';
   static const _usernameKey = 'username';
   static const _passwordKey = 'password';
@@ -49,8 +52,8 @@ class LocalAuthService {
     if (storedUsername == null || storedPassword == null) {
       await register(
         name: 'Test User',
-        username: 'testuser',
-        password: 'password123',
+        username: defaultUsername,
+        password: defaultPassword,
         age: 25,
         country: 'Australia',
         selectedHabits: [],

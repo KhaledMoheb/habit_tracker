@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habitt_app/screens/notifications_screen.dart';
 import 'package:habitt_app/screens/personal_info_screen.dart';
 import 'package:habitt_app/screens/reports_screen.dart';
 import 'package:habitt_app/services/habit_service.dart';
@@ -64,35 +65,6 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
     await _initialize();
   }
 
-  Color _getColorFromName(String colorName) {
-    switch (colorName.toLowerCase()) {
-      case "green":
-        return Colors.green;
-      case "blue":
-        return Colors.blue;
-      case "red":
-        return Colors.red;
-      case "orange":
-        return Colors.orange;
-      case "yellow":
-        return Colors.yellow;
-      case "purple":
-        return Colors.purple;
-      case "amber":
-        return Colors.amber;
-      case "teal":
-        return Colors.teal;
-      case "pink":
-        return Colors.pink;
-      case "cyan":
-        return Colors.cyan;
-      case "indigo":
-        return Colors.indigo;
-      default:
-        return Colors.deepPurple;
-    }
-  }
-
   Widget _buildSectionTitle(String text, List<Widget> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -144,7 +116,7 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: _getColorFromName(colorName),
+          color: HabitService.getColorFromName(colorName),
           borderRadius: BorderRadius.circular(15),
         ),
         child: Text(
@@ -220,7 +192,15 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
             ListTile(
               leading: const Icon(Icons.notifications),
               title: const Text('Notifications'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.exit_to_app),

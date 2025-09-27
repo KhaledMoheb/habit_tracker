@@ -1,12 +1,12 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Flutter plugin must be applied after Android and Kotlin Gradle plugins
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.example.habitt_app"
+    namespace = "com.khaled.habitt_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.habitt_app"
+        applicationId = "com.khaled.habitt_app" // ✅ keep consistent
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

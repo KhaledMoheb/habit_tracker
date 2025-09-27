@@ -21,6 +21,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     'Amber': Colors.amber[400]!,
     'Orange': Colors.deepOrange[400]!,
     'Light Green': Colors.lightGreen[400]!,
+    'Yellow': Colors.yellow[600]!,
+    'Purple': Colors.purple[400]!,
+    'Teal': Colors.teal[400]!,
+    'Cyan': Colors.cyan[400]!,
+    'Indigo': Colors.indigo[400]!,
+    'Deep Purple': Colors.deepPurple[400]!, // acts as fallback
   };
 
   String _selectedColorKey = 'Amber';

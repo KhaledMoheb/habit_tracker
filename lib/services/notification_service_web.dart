@@ -1,6 +1,7 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:js' as js;
 import 'package:flutter/material.dart';
+import 'dart:html' as html;
 
 class NotificationService {
   static Future<void> init() async {
@@ -22,6 +23,25 @@ class NotificationService {
 
   static Future<void> showTestNotification() async {
     debugPrint('Running on Web → Native Notification API test');
+    if (html.Notification.permission != "granted") {
+      html.Notification.requestPermission().then((permission) {
+        if (permission == 'granted') {
+          html.Notification(
+            "Habit Reminder",
+            body: "It's time to work on your habits!",
+          );
+          debugPrint('Notification permission granted. Notification sent.');
+        } else {
+          debugPrint('Notification permission denied.');
+        }
+      });
+    } else {
+      html.Notification(
+        "Habit Reminder",
+        body: "It's time to work on your habits!",
+      );
+      debugPrint('Notification sent directly.');
+    }
     js.context.callMethod("eval", [
       """
       if (Notification.permission === 'granted') {
